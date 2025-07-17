@@ -1187,17 +1187,18 @@ with tabs[5]:
 
         with st.expander("🌐 프롬프트와 기반 내용 합치기"):
             st.markdown("**사용법:** 기존 프롬프트와 기반 내용을 각각 선택하면 합쳐진 내용으로 ChatGPT 링크를 생성합니다.")
-            if 'base_storage' in st.session_state and st.session_state.prompt_storage and st.session_state.base_storage:
-                prompt_options = [f"{p['title']} ({p['category']})" for p in st.session_state.prompt_storage]
-                base_options = [f"{b['title']} ({b['category']})" for b in st.session_state.base_storage]
-                selected_prompt_idx = st.selectbox("프롬프트 선택", range(len(st.session_state.prompt_storage)), format_func=lambda x: prompt_options[x], key="combine_prompt_select")
-                selected_base_idx = st.selectbox("기반 내용 선택", range(len(st.session_state.base_storage)), format_func=lambda x: base_options[x], key="combine_base_select")
-                selected_prompt = st.session_state.prompt_storage[selected_prompt_idx]
-                selected_base = st.session_state.base_storage[selected_base_idx]
-                # 안내문구/내용 미출력, 오직 합쳐진 질문만 미리보기로 표시
-                combined_question = selected_prompt['content'] + "\n\n" + selected_base['content']
+            prompts = get_all_prompts()
+            bases = get_all_base_contents()
+            if prompts and bases:
+                prompt_options = [f"{p.title} ({p.category})" for p in prompts]
+                base_options = [f"{b.title} ({b.category})" for b in bases]
+                selected_prompt_idx = st.selectbox("프롬프트 선택", range(len(prompts)), format_func=lambda x: prompt_options[x], key="combine_prompt_select_db")
+                selected_base_idx = st.selectbox("기반 내용 선택", range(len(bases)), format_func=lambda x: base_options[x], key="combine_base_select_db")
+                selected_prompt = prompts[selected_prompt_idx]
+                selected_base = bases[selected_base_idx]
+                combined_question = selected_prompt.content + "\n\n" + selected_base.content
                 st.markdown("**합쳐진 질문 미리보기:**")
-                st.text_area("최종 질문", value=combined_question, height=200, disabled=False, key="combined_final_text")
+                st.text_area("최종 질문", value=combined_question, height=200, disabled=False, key="combined_final_text_db")
                 # ChatGPT 링크 생성
                 encoded_combined = combined_question.replace('\n', '%0A').replace(' ', '%20')
                 chatgpt_url = f"https://chat.openai.com/?q={encoded_combined}"
