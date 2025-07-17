@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import json
 import sqlite3
 
-DB_PATH = 'postgresql://postgres:[YOUR-PASSWORD]@db.jzfwqunitwpczhartwdh.supabase.co:5432/postgres'
+DB_PATH = 'postgresql://postgres.jzfwqunitwpczhartwdh:rhdqngo123@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres'
 engine = create_engine(DB_PATH)  # connect_args 제거
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
