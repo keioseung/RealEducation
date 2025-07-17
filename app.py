@@ -896,7 +896,7 @@ with tabs[5]:
             input_date_str = input_date.isoformat()
             existing_infos = get_ai_info_by_date(input_date_str)
 
-            # session_state에 입력값 저장 (날짜별로 분리)
+            # session_state에 입력값 저장 (날짜별로 분리, 최초 렌더링 시에만)
             if f"info1_{input_date_str}" not in st.session_state:
                 st.session_state[f"info1_{input_date_str}"] = existing_infos[0] if existing_infos else ""
             if f"info2_{input_date_str}" not in st.session_state:
@@ -909,12 +909,16 @@ with tabs[5]:
             info3 = st.text_area("정보 3", key=f"info3_{input_date_str}")
 
             if st.button("저장"):
-                add_ai_info(input_date_str, [info1, info2, info3])
+                add_ai_info(input_date_str, [
+                    st.session_state[f"info1_{input_date_str}"],
+                    st.session_state[f"info2_{input_date_str}"],
+                    st.session_state[f"info3_{input_date_str}"]
+                ])
                 st.success("저장되었습니다!")
-                # 입력값을 새로 저장한 값으로 갱신
-                st.session_state[f"info1_{input_date_str}"] = info1
-                st.session_state[f"info2_{input_date_str}"] = info2
-                st.session_state[f"info3_{input_date_str}"] = info3
+                # 저장 후 입력값을 비우고 싶으면 아래 주석 해제
+                # st.session_state[f"info1_{input_date_str}"] = ""
+                # st.session_state[f"info2_{input_date_str}"] = ""
+                # st.session_state[f"info3_{input_date_str}"] = ""
 
             with col2:
                 if st.button("🗑️ 기존 정보 삭제") and existing_infos:
