@@ -13,6 +13,13 @@ import io
 import contextlib
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+from appdb import (
+    get_ai_info_by_date, add_ai_info, delete_ai_info, get_all_ai_info_dates,
+    get_all_quiz_topics, get_quiz_by_topic, add_quiz, update_quiz, delete_quiz,
+    get_user_progress, update_user_progress, get_user_stats, update_user_stats,
+    get_all_prompts, add_prompt, update_prompt, delete_prompt,
+    get_all_base_contents, add_base_content, update_base_content, delete_base_content
+)
 
 # deep-translator 기반 번역 함수
 
@@ -856,14 +863,12 @@ with tabs[5]:
     # 관리자 인증 (간단한 패스워드)
     if 'admin_authenticated' not in st.session_state:
         st.session_state.admin_authenticated = False
-    
     if not st.session_state.admin_authenticated:
         with st.form("admin_login_form"):
             password = st.text_input("관리자 비밀번호", type="password")
             submit_button = st.form_submit_button("로그인")
-            
             if submit_button:
-                if password == ADMIN_PASSWORD:  # 실제 배포시에는 더 안전한 인증 방식 사용
+                if password == ADMIN_PASSWORD:
                     st.session_state.admin_authenticated = True
                     st.success("관리자 인증이 완료되었습니다.")
                     st.rerun()
@@ -873,7 +878,15 @@ with tabs[5]:
     else:
         # 관리자 탭 생성
         admin_tabs = st.tabs(["📊 데이터 관리", "🎯 퀴즈 관리", "🤖 프롬프트 관리"])
-
+        # --- DB 전체 백업 버튼 추가 ---
+        with st.expander("💾 DB 전체 백업/다운로드"):
+            with open("ai_info.db", "rb") as f:
+                st.download_button(
+                    label="DB 전체 백업 다운로드 (ai_info.db)",
+                    data=f,
+                    file_name="ai_info.db",
+                    mime="application/octet-stream"
+                )
         # 1. 데이터 관리 탭
         with admin_tabs[0]:
             st.markdown('<h3 class="section-title">📊 데이터 관리</h3>', unsafe_allow_html=True)
