@@ -698,19 +698,22 @@ with tabs[1]:
         selected_date_str = selected_date.isoformat()
         infos = get_ai_info_by_date_wrapper(selected_date_str)
         if infos:
+            learned_list = st.session_state.user_progress.get(selected_date_str, [])
+            st.markdown(f"<b>오늘의 목표:</b> {len(infos)}개 정보 모두 학습하기", unsafe_allow_html=True)
+            st.progress(len(learned_list) / len(infos) if infos else 0.0, text=f"{len(learned_list)}/{len(infos)} 완료")
             for i, info in enumerate(infos, 1):
-                learned = i-1 in st.session_state.user_progress.get(selected_date_str, [])
+                learned = i-1 in learned_list
                 st.markdown(f"""
                 <div class="info-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h4>💡 AI 정보 {i}</h4>
+                        <h4>{info['title'] or f'AI 정보 {i}'}</h4>
                         <div>{'✅ 학습완료' if learned else '📖 학습하기'}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                render_info(info, key=f"learn_{selected_date_str}_{i}")
+                render_info(info['content'], key=f"learn_{selected_date_str}_{i}")
                 st.markdown("</div>", unsafe_allow_html=True)
                 if not learned:
-                    if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}"):
+                    if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}_new"):
                         update_user_progress(selected_date_str, i-1)
                         new_achievements = check_achievements()
                         st.success(f"🎉 정보 {i}을(를) 학습하셨습니다!")
@@ -719,22 +722,8 @@ with tabs[1]:
                                 st.balloons()
                                 st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
                         st.rerun()
-            # 학습 진행률 표시
-            learned_count = len(st.session_state.user_progress.get(selected_date_str, []))
-            progress = (learned_count / len(infos)) * 100
-            st.markdown(f"""
-            <div style="margin-top: 30px;">
-                <h4>📊 학습 진행률</h4>
-                <div class="progress-container">
-                    <div class="progress-bar" style="width: {progress}%"></div>
-                </div>
-                <p style="text-align: center; margin: 10px 0;">
-                    {learned_count}/{len(infos)} 완료 ({progress:.1f}%)
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            if learned_count == len(infos):
-                st.success("🎉 이 날짜의 모든 AI 정보를 학습하셨습니다! 훌륭해요!")
+            if len(learned_list) == len(infos):
+                st.success("🎉 오늘의 모든 정보를 학습하셨습니다! AI 마스터에 한 걸음 더 가까워졌어요!")
                 st.balloons()
         else:
             st.info("이 날짜의 AI 정보가 아직 등록되지 않았습니다.")
@@ -754,8 +743,8 @@ with tabs[2]:
             for i, info in enumerate(infos):
                 learned = i in learned_infos
                 status = "✅" if learned else "⏳"
-                st.markdown(f"{status} 정보 {i+1}:")
-                render_info(info, key=f"record_{date_str}_{i}")
+                st.markdown(f"{status} <b>{info['title'] or f'정보 {i+1}'}</b>", unsafe_allow_html=True)
+                render_info(info['content'], key=f"record_{date_str}_{i}")
             if learned_infos:
                 st.success(f"이 날짜에 {len(learned_infos)}개의 정보를 학습했습니다.")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -913,42 +902,30 @@ with tabs[5]:
         # 1. 데이터 관리 탭
         with admin_tabs[0]:
             st.markdown('<h3 class="section-title">📊 데이터 관리</h3>', unsafe_allow_html=True)
-            # --- AI 정보 추가 ---
             st.markdown("### 📝 AI 정보 추가")
             input_date = st.date_input("날짜 선택", date.today())
             input_date_str = input_date.isoformat()
             existing_infos = get_ai_info_by_date_wrapper(input_date_str)
-
-            # session_state에 입력값 저장 (날짜별로 분리, 최초 렌더링 시에만)
-            if f"info1_{input_date_str}" not in st.session_state:
-                st.session_state[f"info1_{input_date_str}"] = existing_infos[0] if existing_infos else ""
-            if f"info2_{input_date_str}" not in st.session_state:
-                st.session_state[f"info2_{input_date_str}"] = existing_infos[1] if existing_infos else ""
-            if f"info3_{input_date_str}" not in st.session_state:
-                st.session_state[f"info3_{input_date_str}"] = existing_infos[2] if existing_infos else ""
-
-            info1 = st.text_area("정보 1", key=f"info1_{input_date_str}")
-            info2 = st.text_area("정보 2", key=f"info2_{input_date_str}")
-            info3 = st.text_area("정보 3", key=f"info3_{input_date_str}")
-
+            # 제목+내용 입력 필드
+            for i in range(3):
+                st.markdown(f"#### 정보 {i+1}")
+                title_key = f"info{i+1}_title_{input_date_str}"
+                content_key = f"info{i+1}_content_{input_date_str}"
+                if title_key not in st.session_state:
+                    st.session_state[title_key] = existing_infos[i]["title"] if existing_infos and len(existing_infos) > i else ""
+                if content_key not in st.session_state:
+                    st.session_state[content_key] = existing_infos[i]["content"] if existing_infos and len(existing_infos) > i else ""
+                st.text_input("제목", key=title_key)
+                st.text_area("내용", key=content_key)
             if st.button("저장"):
-                add_ai_info_checked(input_date_str, [
-                    st.session_state[f"info1_{input_date_str}"],
-                    st.session_state[f"info2_{input_date_str}"],
-                    st.session_state[f"info3_{input_date_str}"]
-                ])
+                infos = [
+                    {"title": st.session_state[f"info1_title_{input_date_str}"], "content": st.session_state[f"info1_content_{input_date_str}"]},
+                    {"title": st.session_state[f"info2_title_{input_date_str}"], "content": st.session_state[f"info2_content_{input_date_str}"]},
+                    {"title": st.session_state[f"info3_title_{input_date_str}"], "content": st.session_state[f"info3_content_{input_date_str}"]},
+                ]
+                add_ai_info(input_date_str, infos)
                 st.success("저장되었습니다!")
-                # 저장 후 입력값을 비우고 싶으면 아래 주석 해제
-                # st.session_state[f"info1_{input_date_str}"] = ""
-                # st.session_state[f"info2_{input_date_str}"] = ""
-                # st.session_state[f"info3_{input_date_str}"] = ""
-
-            with col2:
-                if st.button("🗑️ 기존 정보 삭제") and existing_infos:
-                    if input_date_str in ai_info_db:
-                        del ai_info_db[input_date_str]
-                        st.success("기존 정보가 삭제되었습니다.")
-                        st.rerun()
+                st.rerun()
             # --- 데이터 통계 ---
             st.markdown("---")
             st.markdown("### 📊 데이터 관리")
