@@ -1344,3 +1344,22 @@ st.markdown("""
 # 자동 저장 (실제 배포시에는 데이터베이스 사용 권장)
 if 'data_saved' not in st.session_state:
     st.session_state.data_saved = True
+
+# 최종질문(요약/정리) 결과에서 중복 전문용어 정리 블록 제거
+import re
+
+def remove_duplicate_terms(text):
+    # 'ChatGPT의 말:' 또는 '전문용어 정리'로 시작하는 블록 제거
+    pattern = r'(ChatGPT의 말:.*?필요하면.*?드릴 수 있습니다!\n?)'
+    text = re.sub(pattern, '', text, flags=re.DOTALL)
+    # '전문용어 정리'로 시작하는 블록도 제거
+    pattern2 = r'(전문용어 정리.*?필요하면.*?드릴 수 있습니다!\n?)'
+    text = re.sub(pattern2, '', text, flags=re.DOTALL)
+    return text
+
+# ... 기존 코드 ...
+# 최종질문 결과를 표시할 때 아래처럼 적용
+# summary = ... (기존 요약 결과)
+# summary = remove_duplicate_terms(summary)
+# st.write(summary)
+# ... 기존 코드 ...
