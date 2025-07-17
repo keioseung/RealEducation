@@ -6,3 +6,4 @@ deep-translator
 matplotlib
 plotly
 sqlalchemy 
+psycopg2-binary
