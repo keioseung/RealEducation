@@ -691,16 +691,24 @@ with tabs[1]:
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.markdown('<h2 class="section-title">📚 오늘의 AI 정보 학습</h2>', unsafe_allow_html=True)
     all_dates = get_all_ai_info_dates()
-    if all_dates and all_dates[0]:
-        today_str = date.today().isoformat()
-        # 안전하게 date 객체로 변환
-        def to_date(val):
-            if isinstance(val, str):
+    from datetime import date
+    def safe_to_date(val):
+        try:
+            if isinstance(val, str) and val:
                 return date.fromisoformat(val)
-            return val
-        min_date = to_date(all_dates[0])
-        max_date = to_date(all_dates[-1])
-        today_date = to_date(today_str)
+            elif isinstance(val, date):
+                return val
+        except Exception:
+            pass
+        return date.today()
+
+    if all_dates and all_dates[0]:
+        min_date = safe_to_date(all_dates[0])
+        max_date = safe_to_date(all_dates[-1])
+        today_date = date.today()
+        # value가 범위 밖이면 min_date로 대체
+        if not (min_date <= today_date <= max_date):
+            today_date = min_date
         selected_date = st.date_input(
             "학습할 날짜를 선택하세요",
             value=today_date,
