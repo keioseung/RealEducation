@@ -418,11 +418,10 @@ def add_ai_info(date_str, infos):
 def get_today_ai_info():
     """오늘의 AI 정보 반환"""
     today_str = date.today().isoformat()
-    return ai_info_db.get(today_str, [])
+    return get_ai_info_by_date(today_str)
 
-def get_ai_info_by_date(date_str):
-    """특정 날짜의 AI 정보 반환"""
-    return ai_info_db.get(date_str, [])
+def get_ai_info_by_date_wrapper(date_str):
+    return get_ai_info_by_date(date_str)
 
 def generate_quiz(topic):
     """퀴즈 생성"""
@@ -432,7 +431,7 @@ def generate_quiz(topic):
 
 def calculate_learning_progress():
     """학습 진행률 계산"""
-    total_available = len(ai_info_db) * 3
+    total_available = len(get_all_ai_info_dates()) * 3
     total_learned = st.session_state.user_stats['total_learned']
     return (total_learned / total_available * 100) if total_available > 0 else 0
 
@@ -615,7 +614,7 @@ with tabs[1]:
         today_str = date.today().isoformat()
         selected_date = st.date_input("학습할 날짜를 선택하세요", value=date.fromisoformat(today_str), min_value=date.fromisoformat(all_dates[0]), max_value=date.fromisoformat(all_dates[-1]), key="learn_date_input")
         selected_date_str = selected_date.isoformat()
-        infos = get_ai_info_by_date(selected_date_str)
+        infos = get_ai_info_by_date_wrapper(selected_date_str)
         if infos:
             for i, info in enumerate(infos, 1):
                 learned = i-1 in st.session_state.user_progress.get(selected_date_str, [])
@@ -667,7 +666,7 @@ with tabs[2]:
     st.markdown('<h2 class="section-title">📖 학습 기록</h2>', unsafe_allow_html=True)
     # 날짜별 학습 기록
     for date_str in sorted(get_all_ai_info_dates(), reverse=True):
-        infos = get_ai_info_by_date(date_str)
+        infos = get_ai_info_by_date_wrapper(date_str)
         learned_infos = st.session_state.user_progress.get(date_str, [])
         with st.expander(f"📅 {date_str} ({len(learned_infos)}/{len(infos)} 학습완료)"):
             for i, info in enumerate(infos):
@@ -755,7 +754,8 @@ with tabs[4]:
     # 학습 진행률
     st.markdown("### 📈 학습 진행률")
     # 전체 정보 개수 계산 (DB 기준)
-    total_available = len(get_all_ai_info_dates()) * 3
+    all_dates = get_all_ai_info_dates()
+    total_available = len(all_dates) * 3
     total_learned = st.session_state.user_stats['total_learned']
     progress = (total_learned / total_available * 100) if total_available > 0 else 0
     st.progress(progress / 100)
@@ -764,7 +764,7 @@ with tabs[4]:
     st.markdown("### 📅 날짜별 학습 현황")
     chart_data = []
     for date_str in sorted(get_all_ai_info_dates()):
-        infos = get_ai_info_by_date(date_str)
+        infos = get_ai_info_by_date_wrapper(date_str)
         total_infos = len(infos)
         learned_infos = len(st.session_state.user_progress.get(date_str, []))
         chart_data.append({
@@ -835,7 +835,7 @@ with tabs[5]:
             st.markdown("### 📝 AI 정보 추가")
             input_date = st.date_input("날짜 선택", date.today())
             input_date_str = input_date.isoformat()
-            existing_infos = get_ai_info_by_date(input_date_str)
+            existing_infos = get_ai_info_by_date_wrapper(input_date_str)
 
             # session_state에 입력값 저장 (날짜별로 분리, 최초 렌더링 시에만)
             if f"info1_{input_date_str}" not in st.session_state:
@@ -872,16 +872,16 @@ with tabs[5]:
             st.markdown("### 📊 데이터 관리")
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("등록된 날짜", len(ai_info_db))
+                st.metric("등록된 날짜", len(get_all_ai_info_dates()))
             with col2:
-                st.metric("총 AI 정보", len(ai_info_db) * 3)
+                st.metric("총 AI 정보", len(get_all_ai_info_dates()) * 3)
             with col3:
                 total_users_learned = sum(len(progress) for progress in st.session_state.user_progress.values())
                 st.metric("총 학습 완료", total_users_learned)
             # --- 등록된 AI 정보 관리 ---
             st.markdown("#### 등록된 AI 정보 관리")
-            for date_str in sorted(ai_info_db.keys(), reverse=True):
-                infos = ai_info_db[date_str]
+            for date_str in sorted(get_all_ai_info_dates(), reverse=True):
+                infos = get_ai_info_by_date_wrapper(date_str)
                 with st.expander(f"📅 {date_str}"):
                     for i, info in enumerate(infos):
                         key_prefix = f"aiinfo_{date_str}_{i}"
