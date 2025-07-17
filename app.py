@@ -349,61 +349,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- [6] AI 정보/퀴즈 데이터 보강 (7일치, 각 3개) ---
-ai_info_db = {
-    "2025-07-14": [
-        "인공지능(AI)은 인간의 지능을 모방하여 문제를 해결하고, 학습하며, 추론하는 컴퓨터 시스템을 의미합니다. AI는 패턴 인식, 자연어 처리, 의사결정 등 다양한 분야에서 활용되며, 현대 사회의 혁신을 이끌고 있습니다.",
-        "기계 학습(Machine Learning)은 AI의 한 분야로, 명시적인 프로그래밍 없이 데이터로부터 스스로 규칙을 학습하는 기술입니다. 대표적으로 지도학습, 비지도학습, 강화학습 등이 있으며, 실제 서비스에 널리 적용되고 있습니다.",
-        "자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 생성할 수 있도록 하는 AI의 핵심 응용 분야입니다. 챗봇, 번역기, 음성 인식 등 다양한 서비스에서 자연어 처리가 사용되고 있습니다."
-    ],
-    "2025-07-15": [
-        "딥러닝(Deep Learning)은 인공신경망을 여러 층으로 쌓아 복잡한 패턴을 학습하는 AI 기술입니다. 이미지 인식, 음성 인식, 자율주행 등에서 뛰어난 성능을 보이며, 최근 AI 발전의 핵심 동력입니다.",
-        "강화학습(Reinforcement Learning)은 에이전트가 환경과 상호작용하며 보상을 최대화하는 방향으로 학습하는 방법입니다. 게임, 로봇 제어, 추천 시스템 등에서 활용되며, 스스로 전략을 개선하는 능력이 특징입니다.",
-        "AI 윤리는 인공지능의 공정성, 투명성, 책임성, 프라이버시 등 사회적·윤리적 문제를 다루는 연구 분야입니다. AI의 오남용 방지와 신뢰성 확보를 위해 매우 중요한 역할을 합니다."
-    ],
-    "2025-07-16": [
-        "컴퓨터 비전(Computer Vision)은 이미지와 비디오 등 시각 정보를 분석하고 이해하는 AI 분야입니다. 얼굴 인식, 자율주행, 의료 영상 분석 등 다양한 산업에서 활용되고 있습니다.",
-        "트랜스포머(Transformer)는 자연어 처리와 생성형 AI에서 널리 쓰이는 현대적 신경망 구조입니다. 병렬 연산이 가능하고, 긴 문맥을 효과적으로 처리할 수 있어 GPT, BERT 등 최신 AI 모델의 기반이 됩니다.",
-        "생성형 AI(Generative AI)는 텍스트, 이미지, 음악 등 새로운 콘텐츠를 창조할 수 있는 인공지능입니다. 예술, 디자인, 콘텐츠 제작 등 창의적 분야에서 혁신을 이끌고 있습니다."
-    ],
-    "2025-07-17": [
-        "지도학습(Supervised Learning)은 입력 데이터와 정답(레이블)을 이용해 모델을 학습시키는 머신러닝 방법입니다. 분류, 회귀 등 다양한 문제에 적용되며, 데이터 품질이 성능에 큰 영향을 미칩니다.",
-        "비지도학습(Unsupervised Learning)은 정답이 없는 데이터에서 숨겨진 패턴이나 구조를 찾는 머신러닝 방법입니다. 군집화, 차원 축소, 이상 탐지 등에 활용됩니다.",
-        "AI는 제조, 금융, 의료, 교육 등 다양한 산업에서 혁신을 이끌고 있습니다. 업무 자동화, 예측 분석, 맞춤형 서비스 등 실질적인 비즈니스 가치를 창출하고 있습니다."
-    ],
-    "2025-07-18": [
-        "AI 로봇은 재난 구조, 물류, 의료 등 다양한 현장에서 인간을 보조하거나 대체하는 역할을 수행합니다. 센서와 AI 알고리즘을 결합해 복잡한 환경에서도 자율적으로 임무를 수행할 수 있습니다.",
-        "AI 기반 번역 서비스는 실시간으로 여러 언어를 자동 번역하여 글로벌 커뮤니케이션을 지원합니다. 최근에는 음성 인식과 결합해 실시간 통역 서비스로 발전하고 있습니다.",
-        "AI는 예술 창작 분야에서도 활발히 활용되고 있습니다. 그림, 음악, 소설 등 다양한 예술 작품을 생성하며, 인간과 협업하는 새로운 창작 방식을 제시합니다."
-    ],
-    "2025-07-19": [
-        "AI는 빅데이터와 함께 발전하며, 방대한 데이터를 분석해 유의미한 인사이트를 도출합니다. 데이터의 양과 질이 AI 모델의 성능에 직접적인 영향을 미칩니다.",
-        "AI 모델의 성능은 데이터 품질, 알고리즘 선택, 하이퍼파라미터 튜닝 등 다양한 요소에 의해 결정됩니다. 실험과 검증을 통해 최적의 모델을 찾는 과정이 중요합니다.",
-        "AI는 윤리적 문제와 함께 발전해야 하며, 공정성, 투명성, 설명 가능성 등 다양한 사회적 요구를 충족해야 합니다. 신뢰할 수 있는 AI 개발이 미래의 핵심 과제입니다."
-    ],
-    "2025-07-20": [
-        # 1. 마크다운+수식 예시
-        "# AI 분류 모델 정확도\n\n- SVM: **92%**\n- Random Forest: **95%**\n- Neural Network: **97%**\n\n$Accuracy = \frac{TP+TN}{TP+TN+FP+FN}$",
-        # 2. matplotlib 그래프 예시
-        """```python
-import matplotlib.pyplot as plt
-plt.figure(figsize=(4,2))
-plt.bar(['SVM', 'RF', 'NN'], [0.92, 0.95, 0.97], color=['#b2bfff','#43cea2','#ff7f50'])
-plt.ylim(0.9, 1.0)
-plt.title('AI 분류 모델 정확도')
-plt.ylabel('정확도')
-plt.tight_layout()
-plt.show()
-```""",
-        # 3. plotly 그래프 예시
-        """```python
-import plotly.graph_objects as go
-fig = go.Figure()
-fig.add_trace(go.Bar(x=['SVM','RF','NN'], y=[0.92,0.95,0.97], marker_color=['#b2bfff','#43cea2','#ff7f50']))
-fig.update_layout(title='AI 분류 모델 정확도', yaxis=dict(range=[0.9,1.0]))
-fig.show()
-```"""
-    ],
-}
+# ai_info_db = {...}  # <-- 완전 삭제/주석처리
 
 quiz_db = {
     "AI 기초": [
@@ -664,74 +610,73 @@ with tabs[1]:
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.markdown('<h2 class="section-title">📚 오늘의 AI 정보 학습</h2>', unsafe_allow_html=True)
     # 날짜 선택 기능 추가
-    all_dates = sorted(ai_info_db.keys())
-    today_str = date.today().isoformat()
-    selected_date = st.date_input("학습할 날짜를 선택하세요", value=date.fromisoformat(today_str), min_value=date.fromisoformat(all_dates[0]), max_value=date.fromisoformat(all_dates[-1]), key="learn_date_input")
-    selected_date_str = selected_date.isoformat()
-    infos = get_ai_info_by_date(selected_date_str)
-    if infos:
-        for i, info in enumerate(infos, 1):
-            learned = i-1 in st.session_state.user_progress.get(selected_date_str, [])
+    all_dates = get_all_ai_info_dates()
+    if all_dates:
+        today_str = date.today().isoformat()
+        selected_date = st.date_input("학습할 날짜를 선택하세요", value=date.fromisoformat(today_str), min_value=date.fromisoformat(all_dates[0]), max_value=date.fromisoformat(all_dates[-1]), key="learn_date_input")
+        selected_date_str = selected_date.isoformat()
+        infos = get_ai_info_by_date(selected_date_str)
+        if infos:
+            for i, info in enumerate(infos, 1):
+                learned = i-1 in st.session_state.user_progress.get(selected_date_str, [])
+                st.markdown(f"""
+                <div class="info-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4>💡 AI 정보 {i}</h4>
+                        <div>{'✅ 학습완료' if learned else '📖 학습하기'}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+                render_info(info, key=f"learn_{selected_date_str}_{i}")
+                st.markdown("</div>", unsafe_allow_html=True)
+                if not learned:
+                    if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}"):
+                        update_user_progress(selected_date_str, i-1)
+                        new_achievements = check_achievements()
+                        st.success(f"🎉 정보 {i}을(를) 학습하셨습니다!")
+                        if new_achievements:
+                            for achievement in new_achievements:
+                                st.balloons()
+                                st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
+                        st.rerun()
+            # 학습 진행률 표시
+            learned_count = len(st.session_state.user_progress.get(selected_date_str, []))
+            progress = (learned_count / len(infos)) * 100
             st.markdown(f"""
-            <div class="info-card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h4>💡 AI 정보 {i}</h4>
-                    <div>{'✅ 학습완료' if learned else '📖 학습하기'}</div>
+            <div style="margin-top: 30px;">
+                <h4>📊 학습 진행률</h4>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {progress}%"></div>
                 </div>
-            """, unsafe_allow_html=True)
-            render_info(info, key=f"learn_{selected_date_str}_{i}")
-            st.markdown("</div>", unsafe_allow_html=True)
-            if not learned:
-                if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}"):
-                    update_user_progress(selected_date_str, i-1)
-                    new_achievements = check_achievements()
-                    st.success(f"🎉 정보 {i}을(를) 학습하셨습니다!")
-                    if new_achievements:
-                        for achievement in new_achievements:
-                            st.balloons()
-                            st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
-                    st.rerun()
-        # 학습 진행률 표시
-        learned_count = len(st.session_state.user_progress.get(selected_date_str, []))
-        progress = (learned_count / len(infos)) * 100
-        st.markdown(f"""
-        <div style="margin-top: 30px;">
-            <h4>📊 학습 진행률</h4>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {progress}%"></div>
+                <p style="text-align: center; margin: 10px 0;">
+                    {learned_count}/{len(infos)} 완료 ({progress:.1f}%)
+                </p>
             </div>
-            <p style="text-align: center; margin: 10px 0;">
-                {learned_count}/{len(infos)} 완료 ({progress:.1f}%)
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        if learned_count == len(infos):
-            st.success("🎉 이 날짜의 모든 AI 정보를 학습하셨습니다! 훌륭해요!")
-            st.balloons()
+            """, unsafe_allow_html=True)
+            if learned_count == len(infos):
+                st.success("🎉 이 날짜의 모든 AI 정보를 학습하셨습니다! 훌륭해요!")
+                st.balloons()
+        else:
+            st.info("이 날짜의 AI 정보가 아직 등록되지 않았습니다.")
     else:
-        st.info("이 날짜의 AI 정보가 아직 등록되지 않았습니다.")
+        st.info("등록된 AI 정보가 없습니다. 관리자에서 먼저 등록해 주세요.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tabs[2]:
     # 학습 기록
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.markdown('<h2 class="section-title">📖 학습 기록</h2>', unsafe_allow_html=True)
-    
     # 날짜별 학습 기록
-    for date_str in sorted(ai_info_db.keys(), reverse=True):
-        infos = ai_info_db[date_str]
+    for date_str in sorted(get_all_ai_info_dates(), reverse=True):
+        infos = get_ai_info_by_date(date_str)
         learned_infos = st.session_state.user_progress.get(date_str, [])
-        
         with st.expander(f"📅 {date_str} ({len(learned_infos)}/{len(infos)} 학습완료)"):
             for i, info in enumerate(infos):
                 learned = i in learned_infos
                 status = "✅" if learned else "⏳"
                 st.markdown(f"{status} 정보 {i+1}:")
                 render_info(info, key=f"record_{date_str}_{i}")
-            
             if learned_infos:
                 st.success(f"이 날짜에 {len(learned_infos)}개의 정보를 학습했습니다.")
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tabs[3]:
@@ -797,10 +742,8 @@ with tabs[4]:
     # 통계
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.markdown('<h2 class="section-title">📊 상세 통계</h2>', unsafe_allow_html=True)
-    
     # 전체 통계
     col1, col2, col3, col4 = st.columns(4)
-    
     with col1:
         st.metric("총 학습 정보", st.session_state.user_stats['total_learned'])
     with col2:
@@ -809,20 +752,20 @@ with tabs[4]:
         st.metric("퀴즈 점수", st.session_state.user_stats['quiz_score'])
     with col4:
         st.metric("획득 성취", len(st.session_state.user_stats['achievements']))
-    
     # 학습 진행률
     st.markdown("### 📈 학습 진행률")
-    progress = calculate_learning_progress()
+    # 전체 정보 개수 계산 (DB 기준)
+    total_available = len(get_all_ai_info_dates()) * 3
+    total_learned = st.session_state.user_stats['total_learned']
+    progress = (total_learned / total_available * 100) if total_available > 0 else 0
     st.progress(progress / 100)
     st.write(f"전체 진행률: {progress:.1f}%")
-    
     # 날짜별 학습 현황 (Plotly 그래프)
     st.markdown("### 📅 날짜별 학습 현황")
-    import pandas as pd
-    import plotly.graph_objects as go
     chart_data = []
-    for date_str in sorted(ai_info_db.keys()):
-        total_infos = len(ai_info_db[date_str])
+    for date_str in sorted(get_all_ai_info_dates()):
+        infos = get_ai_info_by_date(date_str)
+        total_infos = len(infos)
         learned_infos = len(st.session_state.user_progress.get(date_str, []))
         chart_data.append({
             '날짜': date_str,
@@ -847,12 +790,10 @@ with tabs[4]:
         st.plotly_chart(fig, use_container_width=True)
     # 성취 목록
     st.markdown("### 🏆 성취 시스템")
-    
     for achievement in achievements:
         achieved = achievement['name'] in st.session_state.user_stats['achievements']
         status = "✅" if achieved else "⏳"
         st.markdown(f"{status} **{achievement['name']}**: {achievement['description']}")
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tabs[5]:
