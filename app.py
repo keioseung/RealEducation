@@ -406,12 +406,11 @@ def update_user_progress(date_str, info_index):
                 st.session_state.user_stats['streak_days'] = 1
             st.session_state.user_stats['last_learned_date'] = today
 
-def add_ai_info(date_str, infos):
-    """관리자가 AI 정보 3개를 등록하는 함수"""
+def add_ai_info_checked(date_str, infos):
     if len(infos) != 3 or any(i.strip() == "" for i in infos):
         st.error("반드시 3개의 정보를 모두 입력해야 합니다.")
         return False
-    ai_info_db[date_str] = infos
+    add_ai_info(date_str, infos)
     st.success(f"✅ {date_str} 날짜에 AI 정보 3개가 등록되었습니다!")
     return True
 
@@ -850,7 +849,7 @@ with tabs[5]:
             info3 = st.text_area("정보 3", key=f"info3_{input_date_str}")
 
             if st.button("저장"):
-                add_ai_info(input_date_str, [
+                add_ai_info_checked(input_date_str, [
                     st.session_state[f"info1_{input_date_str}"],
                     st.session_state[f"info2_{input_date_str}"],
                     st.session_state[f"info3_{input_date_str}"]
