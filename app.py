@@ -693,11 +693,19 @@ with tabs[1]:
     all_dates = get_all_ai_info_dates()
     if all_dates and all_dates[0]:
         today_str = date.today().isoformat()
+        # 안전하게 date 객체로 변환
+        def to_date(val):
+            if isinstance(val, str):
+                return date.fromisoformat(val)
+            return val
+        min_date = to_date(all_dates[0])
+        max_date = to_date(all_dates[-1])
+        today_date = to_date(today_str)
         selected_date = st.date_input(
             "학습할 날짜를 선택하세요",
-            value=date.fromisoformat(today_str),
-            min_value=date.fromisoformat(all_dates[0]),
-            max_value=date.fromisoformat(all_dates[-1]),
+            value=today_date,
+            min_value=min_date,
+            max_value=max_date,
             key="learn_date_input"
         )
         selected_date_str = selected_date.isoformat()
