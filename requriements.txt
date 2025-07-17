@@ -1,0 +1,7 @@
+streamlit
+pandas
+altair
+feedparser
+deep-translator
+matplotlib
+plotly
