@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
 import json
+import sqlite3
 
 DB_PATH = 'sqlite:///ai_info.db'
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
@@ -54,22 +55,61 @@ class BaseContent(Base):
 
 Base.metadata.create_all(engine)
 
+# --- DB 마이그레이션: ai_info 테이블에 제목/내용 컬럼 추가 ---
+def migrate_ai_info_table():
+    conn = sqlite3.connect('ai_info.db')
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(ai_info);")
+    columns = [row[1] for row in cur.fetchall()]
+    alter_cmds = []
+    if 'info1_title' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info1_title TEXT;")
+    if 'info2_title' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info2_title TEXT;")
+    if 'info3_title' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info3_title TEXT;")
+    if 'info1_content' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info1_content TEXT;")
+    if 'info2_content' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info2_content TEXT;")
+    if 'info3_content' not in columns:
+        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info3_content TEXT;")
+    for cmd in alter_cmds:
+        cur.execute(cmd)
+    conn.commit()
+    conn.close()
+
+migrate_ai_info_table()
+
 # --- AI 정보 CRUD ---
 def get_ai_info_by_date(date_str):
     db = SessionLocal()
     ai_info = db.query(AIInfo).filter(AIInfo.date == date_str).first()
     db.close()
     if ai_info:
-        return [ai_info.info1, ai_info.info2, ai_info.info3]
+        # 제목+내용 쌍으로 반환
+        return [
+            {"title": ai_info.info1_title or "", "content": ai_info.info1_content or ai_info.info1 or ""},
+            {"title": ai_info.info2_title or "", "content": ai_info.info2_content or ai_info.info2 or ""},
+            {"title": ai_info.info3_title or "", "content": ai_info.info3_content or ai_info.info3 or ""},
+        ]
     return []
 
 def add_ai_info(date_str, infos):
     db = SessionLocal()
     ai_info = db.query(AIInfo).filter(AIInfo.date == date_str).first()
+    # infos: [{title, content}, ...]
     if ai_info:
-        ai_info.info1, ai_info.info2, ai_info.info3 = infos
+        ai_info.info1_title, ai_info.info1_content = infos[0]["title"], infos[0]["content"]
+        ai_info.info2_title, ai_info.info2_content = infos[1]["title"], infos[1]["content"]
+        ai_info.info3_title, ai_info.info3_content = infos[2]["title"], infos[2]["content"]
     else:
-        ai_info = AIInfo(date=date_str, info1=infos[0], info2=infos[1], info3=infos[2])
+        ai_info = AIInfo(
+            date=date_str,
+            info1_title=infos[0]["title"], info1_content=infos[0]["content"],
+            info2_title=infos[1]["title"], info2_content=infos[1]["content"],
+            info3_title=infos[2]["title"], info3_content=infos[2]["content"]
+        )
         db.add(ai_info)
     db.commit()
     db.close()
