@@ -18,7 +18,8 @@ from appdb import (
     get_all_quiz_topics, get_quiz_by_topic, add_quiz, update_quiz, delete_quiz,
     get_user_progress, update_user_progress, get_user_stats, update_user_stats,
     get_all_prompts, add_prompt, update_prompt, delete_prompt,
-    get_all_base_contents, add_base_content, update_base_content, delete_base_content
+    get_all_base_contents, add_base_content, update_base_content, delete_base_content,
+    update_ai_info_item, delete_ai_info_item
 )
 
 # deep-translator 기반 번역 함수
@@ -890,15 +891,13 @@ with tabs[5]:
                         col1, col2 = st.columns([1,1])
                         with col1:
                             if st.button("저장", key=f"save_{key_prefix}"):
-                                ai_info_db[date_str][i] = new_info
+                                update_ai_info_item(date_str, i, new_info)
                                 st.success("정보가 수정되었습니다!")
                                 st.rerun()
                         with col2:
                             if st.button("삭제", key=f"delete_{key_prefix}"):
-                                ai_info_db[date_str].pop(i)
+                                delete_ai_info_item(date_str, i)
                                 st.success("정보가 삭제되었습니다!")
-                                if not ai_info_db[date_str]:
-                                    del ai_info_db[date_str]
                                 st.rerun()
 
         # 2. 퀴즈 관리 탭

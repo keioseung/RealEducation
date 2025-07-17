@@ -88,6 +88,32 @@ def get_all_ai_info_dates():
     db.close()
     return dates
 
+def update_ai_info_item(date_str, index, new_info):
+    db = SessionLocal()
+    ai_info = db.query(AIInfo).filter(AIInfo.date == date_str).first()
+    if ai_info:
+        if index == 0:
+            ai_info.info1 = new_info
+        elif index == 1:
+            ai_info.info2 = new_info
+        elif index == 2:
+            ai_info.info3 = new_info
+        db.commit()
+    db.close()
+
+def delete_ai_info_item(date_str, index):
+    db = SessionLocal()
+    ai_info = db.query(AIInfo).filter(AIInfo.date == date_str).first()
+    if ai_info:
+        if index == 0:
+            ai_info.info1 = None
+        elif index == 1:
+            ai_info.info2 = None
+        elif index == 2:
+            ai_info.info3 = None
+        db.commit()
+    db.close()
+
 # --- 퀴즈 CRUD ---
 def get_all_quiz_topics():
     db = SessionLocal()
