@@ -895,18 +895,27 @@ with tabs[5]:
             input_date = st.date_input("날짜 선택", date.today())
             input_date_str = input_date.isoformat()
             existing_infos = get_ai_info_by_date(input_date_str)
-            if existing_infos:
-                st.warning(f"⚠️ {input_date_str}에 이미 정보가 등록되어 있습니다.")
-                for i, info in enumerate(existing_infos, 1):
-                    st.write(f"{i}. {info}")
-            info1 = st.text_area("정보 1", height=100)
-            info2 = st.text_area("정보 2", height=100)
-            info3 = st.text_area("정보 3", height=100)
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("💾 AI 정보 저장"):
-                    if add_ai_info(input_date_str, [info1, info2, info3]):
-                        st.balloons()
+
+            # session_state에 입력값 저장 (날짜별로 분리)
+            if f"info1_{input_date_str}" not in st.session_state:
+                st.session_state[f"info1_{input_date_str}"] = existing_infos[0] if existing_infos else ""
+            if f"info2_{input_date_str}" not in st.session_state:
+                st.session_state[f"info2_{input_date_str}"] = existing_infos[1] if existing_infos else ""
+            if f"info3_{input_date_str}" not in st.session_state:
+                st.session_state[f"info3_{input_date_str}"] = existing_infos[2] if existing_infos else ""
+
+            info1 = st.text_area("정보 1", key=f"info1_{input_date_str}")
+            info2 = st.text_area("정보 2", key=f"info2_{input_date_str}")
+            info3 = st.text_area("정보 3", key=f"info3_{input_date_str}")
+
+            if st.button("저장"):
+                add_ai_info(input_date_str, [info1, info2, info3])
+                st.success("저장되었습니다!")
+                # 입력값을 새로 저장한 값으로 갱신
+                st.session_state[f"info1_{input_date_str}"] = info1
+                st.session_state[f"info2_{input_date_str}"] = info2
+                st.session_state[f"info3_{input_date_str}"] = info3
+
             with col2:
                 if st.button("🗑️ 기존 정보 삭제") and existing_infos:
                     if input_date_str in ai_info_db:
