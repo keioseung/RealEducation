@@ -16,6 +16,12 @@ class AIInfo(Base):
     info1 = Column(Text)
     info2 = Column(Text)
     info3 = Column(Text)
+    info1_title = Column(Text)
+    info2_title = Column(Text)
+    info3_title = Column(Text)
+    info1_content = Column(Text)
+    info2_content = Column(Text)
+    info3_content = Column(Text)
 
 class Quiz(Base):
     __tablename__ = 'quiz'
