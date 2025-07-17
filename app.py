@@ -985,324 +985,201 @@ with tabs[5]:
         # 2. 퀴즈 관리 탭
         with admin_tabs[1]:
             st.markdown('<h3 class="section-title">🎯 퀴즈 관리</h3>', unsafe_allow_html=True)
-            quiz_topic = st.selectbox("퀴즈 주제", list(quiz_db.keys()) + ["새 주제 추가"])
+            quiz_topics = get_all_quiz_topics()
+            quiz_topic = st.selectbox("퀴즈 주제", quiz_topics + ["새 주제 추가"])
             if quiz_topic == "새 주제 추가":
                 new_topic = st.text_input("새 주제 이름")
                 if new_topic and st.button("주제 추가"):
-                    quiz_db[new_topic] = []
-                    st.success(f"새 주제 '{new_topic}'이 추가되었습니다.")
+                    st.session_state['new_quiz_topic'] = new_topic
+                    st.success(f"새 주제 '{new_topic}'이 추가되었습니다! 새로고침 후 사용하세요.")
                     st.rerun()
             else:
-                st.write(f"**{quiz_topic}** 주제의 퀴즈: {len(quiz_db[quiz_topic])}개")
-                for idx, quiz in enumerate(quiz_db[quiz_topic]):
-                    with st.expander(f"Q{idx+1}: {quiz['question']}"):
-                        st.write(f"- 선택지: {quiz['options']}")
-                        st.write(f"- 정답: {quiz['options'][quiz['correct']]}")
+                quizzes = get_quiz_by_topic(quiz_topic)
+                st.write(f"**{quiz_topic}** 주제의 퀴즈: {len(quizzes)}개")
+                for quiz in quizzes:
+                    with st.expander(f"Q{quiz.id}: {quiz.question}"):
+                        st.write(f"- 선택지: {[quiz.option1, quiz.option2, quiz.option3, quiz.option4]}")
+                        st.write(f"- 정답: {[quiz.option1, quiz.option2, quiz.option3, quiz.option4][quiz.correct]}")
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button(f"수정", key=f"edit_quiz_{quiz_topic}_{idx}"):
-                                st.session_state[f"edit_quiz_{quiz_topic}_{idx}"] = True
+                            if st.button(f"수정", key=f"edit_quiz_{quiz.id}"):
+                                st.session_state[f"edit_quiz_{quiz.id}"] = True
                         with col2:
-                            if st.button(f"삭제", key=f"delete_quiz_{quiz_topic}_{idx}"):
-                                quiz_db[quiz_topic].pop(idx)
+                            if st.button(f"삭제", key=f"delete_quiz_{quiz.id}"):
+                                delete_quiz(quiz.id)
                                 st.success("퀴즈가 삭제되었습니다!")
                                 st.rerun()
-                        if st.session_state.get(f"edit_quiz_{quiz_topic}_{idx}", False):
-                            new_q = st.text_input("질문", value=quiz['question'], key=f"edit_q_{quiz_topic}_{idx}")
+                        if st.session_state.get(f"edit_quiz_{quiz.id}", False):
+                            new_q = st.text_input("질문", value=quiz.question, key=f"edit_q_{quiz.id}")
                             new_opts = [
-                                st.text_input(f"선택지 1", value=quiz['options'][0], key=f"edit_opt1_{quiz_topic}_{idx}"),
-                                st.text_input(f"선택지 2", value=quiz['options'][1], key=f"edit_opt2_{quiz_topic}_{idx}"),
-                                st.text_input(f"선택지 3", value=quiz['options'][2], key=f"edit_opt3_{quiz_topic}_{idx}"),
-                                st.text_input(f"선택지 4", value=quiz['options'][3], key=f"edit_opt4_{quiz_topic}_{idx}")
+                                st.text_input(f"선택지 1", value=quiz.option1, key=f"edit_opt1_{quiz.id}"),
+                                st.text_input(f"선택지 2", value=quiz.option2, key=f"edit_opt2_{quiz.id}"),
+                                st.text_input(f"선택지 3", value=quiz.option3, key=f"edit_opt3_{quiz.id}"),
+                                st.text_input(f"선택지 4", value=quiz.option4, key=f"edit_opt4_{quiz.id}")
                             ]
-                            new_correct = st.selectbox("정답", [1,2,3,4], index=quiz['correct'], key=f"edit_correct_{quiz_topic}_{idx}") - 1
-                            if st.button("저장", key=f"save_quiz_{quiz_topic}_{idx}"):
-                                quiz_db[quiz_topic][idx] = {
-                                    "question": new_q,
-                                    "options": new_opts,
-                                    "correct": new_correct
-                                }
-                                st.session_state[f"edit_quiz_{quiz_topic}_{idx}"] = False
+                            new_correct = st.selectbox("정답", [1,2,3,4], index=quiz.correct, key=f"edit_correct_{quiz.id}") - 1
+                            new_exp = st.text_input("해설", value=quiz.explanation, key=f"edit_exp_{quiz.id}")
+                            if st.button("저장", key=f"save_quiz_{quiz.id}"):
+                                update_quiz(quiz.id, new_q, new_opts, new_correct, new_exp)
+                                st.session_state[f"edit_quiz_{quiz.id}"] = False
                                 st.success("퀴즈가 수정되었습니다!")
                                 st.rerun()
-                            if st.button("수정 취소", key=f"cancel_edit_{quiz_topic}_{idx}"):
-                                st.session_state[f"edit_quiz_{quiz_topic}_{idx}"] = False
-                with st.expander("새 퀴즈 추가"):
-                    # 프롬프트 선택 드롭다운
-                    prompt_default = "프롬프트에서 불러오기 (선택)"
-                    prompt_options = [prompt_default]
-                    prompt_map = {}
-                    if 'prompt_storage' in st.session_state and st.session_state.prompt_storage:
-                        for i, p in enumerate(st.session_state.prompt_storage):
-                            label = f"{p['title']} ({p['category']})"
-                            prompt_options.append(label)
-                            prompt_map[label] = p['content']
-                    selected_prompt = st.selectbox("프롬프트 불러오기", prompt_options)
-                    # 전체 입력 텍스트박스
-                    if 'quiz_input_text' not in st.session_state:
-                        st.session_state.quiz_input_text = ""
-                    if selected_prompt != prompt_default:
-                        st.session_state.quiz_input_text = prompt_map[selected_prompt]
-                    quiz_input = st.text_area(
-                        "퀴즈 전체 입력 (아래 예시처럼 입력)",
-                        value=st.session_state.quiz_input_text,
-                        height=200,
-                        placeholder="질문: AI란 무엇인가요?\n선택지1: 인공지능\n선택지2: 기계학습\n선택지3: 데이터베이스\n선택지4: 하드웨어\n해설: 인공지능은 AI의 약자입니다."
-                    )
-                    # 파싱 함수
-                    import re
-                    def parse_quiz_input(text):
-                        q = o1 = o2 = o3 = o4 = exp = None
-                        lines = text.splitlines()
-                        for line in lines:
-                            if line.startswith("질문:"):
-                                q = line.replace("질문:", "").strip()
-                            elif line.startswith("선택지1:"):
-                                o1 = line.replace("선택지1:", "").strip()
-                            elif line.startswith("선택지2:"):
-                                o2 = line.replace("선택지2:", "").strip()
-                            elif line.startswith("선택지3:"):
-                                o3 = line.replace("선택지3:", "").strip()
-                            elif line.startswith("선택지4:"):
-                                o4 = line.replace("선택지4:", "").strip()
-                            elif line.startswith("해설:"):
-                                exp = line.replace("해설:", "").strip()
-                        return q, [o1, o2, o3, o4], exp
-                    # 퀴즈 추가 버튼
-                    if st.button("퀴즈 추가"):
-                        question, options, explanation = parse_quiz_input(quiz_input)
-                        if question and all(options):
-                            new_quiz = {
-                                "question": question,
-                                "options": options,
-                                "correct": 0,  # 기본값: 첫 번째 선택지가 정답
-                                "explanation": explanation if explanation else ""
-                            }
-                            quiz_db[quiz_topic].append(new_quiz)
-                            st.success("새 퀴즈가 추가되었습니다!")
-                            st.session_state.quiz_input_text = ""
-                            st.rerun()
-                        else:
-                            st.error("질문과 4개의 선택지를 모두 입력해주세요. (해설은 선택사항)")
+                            if st.button("수정 취소", key=f"cancel_edit_{quiz.id}"):
+                                st.session_state[f"edit_quiz_{quiz.id}"] = False
+            with st.expander("새 퀴즈 추가"):
+                question = st.text_input("질문", key="new_quiz_q")
+                options = [
+                    st.text_input("선택지 1", key="new_quiz_opt1"),
+                    st.text_input("선택지 2", key="new_quiz_opt2"),
+                    st.text_input("선택지 3", key="new_quiz_opt3"),
+                    st.text_input("선택지 4", key="new_quiz_opt4")
+                ]
+                correct = st.selectbox("정답", [1,2,3,4], key="new_quiz_correct") - 1
+                explanation = st.text_input("해설", key="new_quiz_exp")
+                if st.button("퀴즈 추가", key="add_new_quiz"):
+                    if question and all(options):
+                        add_quiz(quiz_topic, question, options, correct, explanation)
+                        st.success("새 퀴즈가 추가되었습니다!")
+                        st.rerun()
+                    else:
+                        st.error("질문과 4개의 선택지를 모두 입력해주세요. (해설은 선택사항)")
 
         # 3. 프롬프트 관리 탭
         with admin_tabs[2]:
             st.markdown('<h3 class="section-title">🤖 프롬프트 관리</h3>', unsafe_allow_html=True)
-            # --- 시스템 관리 ---
-            st.markdown("### 🔄 시스템 관리")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🔄 사용자 진행상황 초기화"):
-                    st.session_state.user_progress = {}
-                    st.session_state.user_stats = {
-                        'total_learned': 0,
-                        'streak_days': 0,
-                        'last_learned_date': None,
-                        'quiz_score': 0,
-                        'achievements': []
-                    }
-                    st.success("사용자 진행상황이 초기화되었습니다.")
-                    st.rerun()
-            with col2:
-                if st.button("📤 데이터 백업"):
-                    backup_data = {
-                        'ai_info_db': ai_info_db,
-                        'quiz_db': quiz_db,
-                        'user_progress': st.session_state.user_progress,
-                        'user_stats': st.session_state.user_stats
-                    }
-                    st.download_button(
-                        label="💾 백업 파일 다운로드",
-                        data=json.dumps(backup_data, ensure_ascii=False, indent=2),
-                        file_name=f"ai_learning_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                        mime="application/json"
-                    )
-
-        # --- 프롬프트 관리 ---
-        st.markdown("---")
-        st.markdown("### 📝 새 프롬프트 추가")
-
-        if 'prompt_storage' not in st.session_state:
-            st.session_state.prompt_storage = []
-
-        prompt_title = st.text_input("프롬프트 제목")
-        prompt_content = st.text_area("프롬프트 내용", height=150, placeholder="예: AI 기술에 대해 설명해주세요. 특히 머신러닝과 딥러닝의 차이점을 중심으로...")
-        prompt_category = st.selectbox("카테고리", ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"])
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("💾 프롬프트 저장"):
-                if prompt_title and prompt_content:
-                    new_prompt = {
-                        "title": prompt_title,
-                        "content": prompt_content,
-                        "category": prompt_category,
-                        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    st.session_state.prompt_storage.append(new_prompt)
-                    st.success("프롬프트가 저장되었습니다!")
-                    st.rerun()
-                else:
-                    st.error("제목과 내용을 모두 입력해주세요.")
-        with col2:
-            if st.button("🗑️ 입력 초기화"):
-                st.rerun()
-
-        if st.session_state.prompt_storage:
-            st.markdown("#### 📚 저장된 프롬프트 목록")
-            categories = list(set([p["category"] for p in st.session_state.prompt_storage]))
-            selected_category = st.selectbox("카테고리 필터", ["전체"] + categories)
-            filtered_prompts = st.session_state.prompt_storage
-
-            if selected_category != "전체":
-                filtered_prompts = [p for p in st.session_state.prompt_storage if p["category"] == selected_category]
-
-            for i, prompt in enumerate(filtered_prompts):
-                edit_key = f"edit_prompt_{i}"
+            # 프롬프트 목록
+            prompts = get_all_prompts()
+            for prompt in prompts:
+                edit_key = f"edit_prompt_{prompt.id}"
                 if st.session_state.get(edit_key, False):
-                    with st.expander(f"📝 {prompt['title']} ({prompt['category']}) [수정 중]"):
-                        new_title = st.text_input("프롬프트 제목", value=prompt['title'], key=f"edit_title_{i}")
-                        new_content = st.text_area("프롬프트 내용", value=prompt['content'], height=150, key=f"edit_content_{i}")
+                    with st.expander(f"📝 {prompt.title} ({prompt.category}) [수정 중]"):
+                        new_title = st.text_input("프롬프트 제목", value=prompt.title, key=f"edit_title_{prompt.id}")
+                        new_content = st.text_area("프롬프트 내용", value=prompt.content, height=150, key=f"edit_content_{prompt.id}")
                         new_category = st.selectbox(
                             "카테고리",
                             ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"],
-                            index=["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"].index(prompt['category']),
-                            key=f"edit_category_{i}"
+                            index=["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"].index(prompt.category),
+                            key=f"edit_category_{prompt.id}"
                         )
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("저장", key=f"save_edit_prompt_{i}"):
-                                prompt['title'] = new_title
-                                prompt['content'] = new_content
-                                prompt['category'] = new_category
+                            if st.button("저장", key=f"save_edit_prompt_{prompt.id}"):
+                                update_prompt(prompt.id, new_title, new_content, new_category)
                                 st.session_state[edit_key] = False
                                 st.success("프롬프트가 수정되었습니다!")
                                 st.rerun()
                         with col2:
-                            if st.button("수정 취소", key=f"cancel_edit_prompt_{i}"):
+                            if st.button("수정 취소", key=f"cancel_edit_prompt_{prompt.id}"):
                                 st.session_state[edit_key] = False
                                 st.rerun()
                 else:
-                    with st.expander(f"📝 {prompt['title']} ({prompt['category']})"):
-                        st.markdown(f"**생성일:** {prompt['created_at']}")
+                    with st.expander(f"📝 {prompt.title} ({prompt.category})"):
+                        st.markdown(f"**생성일:** {prompt.created_at}")
                         st.markdown("**내용:**")
-                        st.text_area("프롬프트 내용", value=prompt['content'], height=100, key=f"view_prompt_{i}", disabled=True)
-
+                        st.text_area("프롬프트 내용", value=prompt.content, height=100, key=f"view_prompt_{prompt.id}", disabled=True)
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
-                            if st.button("📋 복사", key=f"copy_prompt_{i}"):
+                            if st.button("📋 복사", key=f"copy_prompt_{prompt.id}"):
                                 st.write("프롬프트가 클립보드에 복사되었습니다!")
-                                st.code(prompt['content'])
+                                st.code(prompt.content)
                         with col2:
-                            if st.button("🔗 ChatGPT 링크", key=f"chatgpt_link_{i}"):
-                                encoded_prompt = prompt['content'].replace('\n', '%0A').replace(' ', '%20')
+                            if st.button("🔗 ChatGPT 링크", key=f"chatgpt_link_{prompt.id}"):
+                                encoded_prompt = prompt.content.replace('\n', '%0A').replace(' ', '%20')
                                 chatgpt_url = f"https://chat.openai.com/?q={encoded_prompt}"
                                 st.markdown(f"[🤖 ChatGPT에서 질문하기]({chatgpt_url})")
                                 st.info("위 링크를 클릭하면 ChatGPT에서 이 프롬프트로 질문할 수 있습니다.")
                         with col3:
-                            if st.button("🗑️ 삭제", key=f"delete_prompt_{i}"):
-                                st.session_state.prompt_storage.pop(i)
+                            if st.button("🗑️ 삭제", key=f"delete_prompt_{prompt.id}"):
+                                delete_prompt(prompt.id)
                                 st.success("프롬프트가 삭제되었습니다!")
                                 st.rerun()
                         with col4:
-                            if st.button("✏️ 수정", key=f"edit_btn_prompt_{i}"):
+                            if st.button("✏️ 수정", key=f"edit_btn_prompt_{prompt.id}"):
                                 st.session_state[edit_key] = True
                                 st.rerun()
-        else:
-            st.info("저장된 프롬프트가 없습니다. 새 프롬프트를 추가해보세요!")
-
-        # --- 기반 내용 관리 ---
-        st.markdown("---")
-        st.markdown("### 📝 새 기반 내용 추가")
-
-        if 'base_storage' not in st.session_state:
-            st.session_state.base_storage = []
-
-        base_title = st.text_input("기반 내용 제목")
-        base_content = st.text_area("기반 내용", height=150, placeholder="예: AI의 역사적 발전 과정을 간략히 서술하세요.")
-        base_category = st.selectbox("카테고리", ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"], key="base_category_select")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("💾 기반 내용 저장"):
-                if base_title and base_content:
-                    new_base = {
-                        "title": base_title,
-                        "content": base_content,
-                        "category": base_category,
-                        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    st.session_state.base_storage.append(new_base)
-                    st.success("기반 내용이 저장되었습니다!")
+            # 새 프롬프트 추가
+            st.markdown("---")
+            st.markdown("### 📝 새 프롬프트 추가")
+            prompt_title = st.text_input("프롬프트 제목", key="new_prompt_title")
+            prompt_content = st.text_area("프롬프트 내용", height=150, key="new_prompt_content", placeholder="예: AI 기술에 대해 설명해주세요. 특히 머신러닝과 딥러닝의 차이점을 중심으로...")
+            prompt_category = st.selectbox("카테고리", ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"], key="new_prompt_category")
+            if st.button("💾 프롬프트 저장", key="save_new_prompt"):
+                if prompt_title and prompt_content:
+                    add_prompt(prompt_title, prompt_content, prompt_category, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    st.success("프롬프트가 저장되었습니다!")
                     st.rerun()
                 else:
                     st.error("제목과 내용을 모두 입력해주세요.")
-        with col2:
-            if st.button("🗑️ 입력 초기화", key="base_clear_btn"):
-                st.rerun()
+            if st.button("🗑️ 입력 초기화", key="clear_new_prompt"):
+                st.session_state["new_prompt_title"] = ""
+                st.session_state["new_prompt_content"] = ""
 
-        if st.session_state.base_storage:
-            st.markdown("#### 📚 저장된 기반 내용 목록")
-            base_categories = list(set([b["category"] for b in st.session_state.base_storage]))
-            selected_base_category = st.selectbox("카테고리 필터", ["전체"] + base_categories, key="base_category_filter")
-            filtered_bases = st.session_state.base_storage
-
-            if selected_base_category != "전체":
-                filtered_bases = [b for b in st.session_state.base_storage if b["category"] == selected_base_category]
-
-            for i, base in enumerate(filtered_bases):
-                edit_key = f"edit_base_{i}"
+            # --- 기반 내용 관리 ---
+            st.markdown("---")
+            st.markdown("### 📝 새 기반 내용 추가")
+            bases = get_all_base_contents()
+            for base in bases:
+                edit_key = f"edit_base_{base.id}"
                 if st.session_state.get(edit_key, False):
-                    with st.expander(f"📝 {base['title']} ({base['category']}) [수정 중]"):
-                        new_title = st.text_input("기반 내용 제목", value=base['title'], key=f"edit_base_title_{i}")
-                        new_content = st.text_area("기반 내용", value=base['content'], height=150, key=f"edit_base_content_{i}")
+                    with st.expander(f"📝 {base.title} ({base.category}) [수정 중]"):
+                        new_title = st.text_input("기반 내용 제목", value=base.title, key=f"edit_base_title_{base.id}")
+                        new_content = st.text_area("기반 내용", value=base.content, height=150, key=f"edit_base_content_{base.id}")
                         new_category = st.selectbox(
                             "카테고리",
                             ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"],
-                            index=["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"].index(base['category']),
-                            key=f"edit_base_category_{i}"
+                            index=["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"].index(base.category),
+                            key=f"edit_base_category_{base.id}"
                         )
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("저장", key=f"save_edit_base_{i}"):
-                                base['title'] = new_title
-                                base['content'] = new_content
-                                base['category'] = new_category
+                            if st.button("저장", key=f"save_edit_base_{base.id}"):
+                                update_base_content(base.id, new_title, new_content, new_category)
                                 st.session_state[edit_key] = False
                                 st.success("기반 내용이 수정되었습니다!")
                                 st.rerun()
                         with col2:
-                            if st.button("수정 취소", key=f"cancel_edit_base_{i}"):
+                            if st.button("수정 취소", key=f"cancel_edit_base_{base.id}"):
                                 st.session_state[edit_key] = False
                                 st.rerun()
                 else:
-                    with st.expander(f"📝 {base['title']} ({base['category']})"):
-                        st.markdown(f"**생성일:** {base['created_at']}")
+                    with st.expander(f"📝 {base.title} ({base.category})"):
+                        st.markdown(f"**생성일:** {base.created_at}")
                         st.markdown("**내용:**")
-                        st.text_area("기반 내용", value=base['content'], height=100, key=f"view_base_{i}", disabled=True)
-
+                        st.text_area("기반 내용", value=base.content, height=100, key=f"view_base_{base.id}", disabled=True)
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
-                            if st.button("📋 복사", key=f"copy_base_{i}"):
+                            if st.button("📋 복사", key=f"copy_base_{base.id}"):
                                 st.write("기반 내용이 클립보드에 복사되었습니다!")
-                                st.code(base['content'])
+                                st.code(base.content)
                         with col2:
-                            if st.button("🔗 ChatGPT 링크", key=f"chatgpt_link_base_{i}"):
-                                encoded_base = base['content'].replace('\n', '%0A').replace(' ', '%20')
+                            if st.button("�� ChatGPT 링크", key=f"chatgpt_link_base_{base.id}"):
+                                encoded_base = base.content.replace('\n', '%0A').replace(' ', '%20')
                                 chatgpt_url = f"https://chat.openai.com/?q={encoded_base}"
                                 st.markdown(f"[🤖 ChatGPT에서 질문하기]({chatgpt_url})")
                                 st.info("위 링크를 클릭하면 ChatGPT에서 이 기반 내용으로 질문할 수 있습니다.")
                         with col3:
-                            if st.button("🗑️ 삭제", key=f"delete_base_{i}"):
-                                st.session_state.base_storage.pop(i)
+                            if st.button("��️ 삭제", key=f"delete_base_{base.id}"):
+                                delete_base_content(base.id)
                                 st.success("기반 내용이 삭제되었습니다!")
                                 st.rerun()
                         with col4:
-                            if st.button("✏️ 수정", key=f"edit_btn_base_{i}"):
+                            if st.button("✏️ 수정", key=f"edit_btn_base_{base.id}"):
                                 st.session_state[edit_key] = True
                                 st.rerun()
-        else:
-            st.info("저장된 기반 내용이 없습니다. 새 기반 내용을 추가해보세요!")
+            # 새 기반 내용 추가
+            base_title = st.text_input("기반 내용 제목", key="new_base_title")
+            base_content = st.text_area("기반 내용", height=150, key="new_base_content", placeholder="예: AI의 역사적 발전 과정을 간략히 서술하세요.")
+            base_category = st.selectbox("카테고리", ["AI 일반", "머신러닝", "딥러닝", "자연어처리", "컴퓨터비전", "기타"], key="new_base_category")
+            if st.button("💾 기반 내용 저장", key="save_new_base"):
+                if base_title and base_content:
+                    add_base_content(base_title, base_content, base_category, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    st.success("기반 내용이 저장되었습니다!")
+                    st.rerun()
+                else:
+                    st.error("제목과 내용을 모두 입력해주세요.")
+            if st.button("🗑️ 입력 초기화", key="clear_new_base"):
+                st.session_state["new_base_title"] = ""
+                st.session_state["new_base_content"] = ""
 
         # --- 프롬프트 + 기반 내용 ChatGPT 링크 생성기 ---
         st.markdown("---")
