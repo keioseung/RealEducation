@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
 import json
-import sqlite3
 
 DB_PATH = 'postgresql://postgres.jzfwqunitwpczhartwdh:rhdqngo123@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres'
 engine = create_engine(DB_PATH)  # connect_args 제거
@@ -62,30 +61,7 @@ class BaseContent(Base):
 Base.metadata.create_all(engine)
 
 # --- DB 마이그레이션: ai_info 테이블에 제목/내용 컬럼 추가 ---
-def migrate_ai_info_table():
-    conn = sqlite3.connect('ai_info.db')
-    cur = conn.cursor()
-    cur.execute("PRAGMA table_info(ai_info);")
-    columns = [row[1] for row in cur.fetchall()]
-    alter_cmds = []
-    if 'info1_title' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info1_title TEXT;")
-    if 'info2_title' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info2_title TEXT;")
-    if 'info3_title' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info3_title TEXT;")
-    if 'info1_content' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info1_content TEXT;")
-    if 'info2_content' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info2_content TEXT;")
-    if 'info3_content' not in columns:
-        alter_cmds.append("ALTER TABLE ai_info ADD COLUMN info3_content TEXT;")
-    for cmd in alter_cmds:
-        cur.execute(cmd)
-    conn.commit()
-    conn.close()
-
-migrate_ai_info_table()
+# migrate_ai_info_table() 함수 및 관련 SQLite 코드는 삭제
 
 # --- AI 정보 CRUD ---
 def get_ai_info_by_date(date_str):
