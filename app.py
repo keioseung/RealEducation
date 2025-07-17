@@ -511,102 +511,104 @@ with st.sidebar:
 tabs = st.tabs(["🏠 홈", "📚 오늘의 학습", "📖 학습 기록", "🎯 퀴즈", "📊 통계", "⚙️ 관리자"])
 
 with tabs[0]:
-    # 홈 - Duolingo 스타일 UX/UI 개선
+    # 홈
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    # 1. 개인화 인사말 및 오늘의 목표
-    user_name = "학습자"  # 추후 사용자 이름 연동 가능
-    st.markdown(f'<h2 style="margin-bottom:0;">👋 안녕하세요, <span style="color:#764ba2;">{user_name}</span>님!</h2>', unsafe_allow_html=True)
-    st.markdown('<h4 style="margin-top:0; color:#667eea;">오늘도 AI 마스터를 향해 한 걸음!</h4>', unsafe_allow_html=True)
     
-    # 2. 오늘의 목표 및 전체 진도 Progress Bar
-    total_available = len(get_all_ai_info_dates()) * 3
-    total_learned = st.session_state.user_stats['total_learned']
-    today_goal = 3  # 예시: 오늘 3개 학습 목표
-    today_learned = len(st.session_state.user_progress.get(date.today().isoformat(), []))
+    col1, col2, col3 = st.columns(3)
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### 오늘의 목표 달성률")
-        st.progress(today_learned / today_goal if today_goal else 0.0, text=f"{today_learned}/{today_goal} 완료")
+        st.markdown("""
+        <div class="stat-card">
+            <h3>📚 총 학습 정보</h3>
+            <h2>{}</h2>
+            <p>개의 AI 정보를 학습했습니다</p>
+        </div>
+        """.format(st.session_state.user_stats['total_learned']), unsafe_allow_html=True)
+    
     with col2:
-        st.markdown("#### 전체 학습 진도")
-        st.progress(total_learned / total_available if total_available else 0.0, text=f"{total_learned}/{total_available} 전체")
+        st.markdown("""
+        <div class="stat-card">
+            <h3>🔥 연속 학습</h3>
+            <h2>{}</h2>
+            <p>일 연속으로 학습 중입니다</p>
+        </div>
+        """.format(st.session_state.user_stats['streak_days']), unsafe_allow_html=True)
     
-    # 3. 퀵 액세스 버튼
-    st.markdown("<br>", unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        if st.button("📚 오늘의 학습 바로가기"):
-            st.session_state.menu = "📚 오늘의 학습"
-            st.rerun()
-    with c2:
-        if st.button("🔁 복습 모드"):
-            st.session_state.menu = "📖 학습 기록"
-            st.rerun()
-    with c3:
-        if st.button("🏆 랭킹/성취"):
-            st.session_state.menu = "📊 통계"
-            st.rerun()
-    with c4:
-        if st.button("⚙️ 설정/관리자"):
-            st.session_state.menu = "⚙️ 관리자"
-            st.rerun()
+    with col3:
+        st.markdown("""
+        <div class="stat-card">
+            <h3>🎯 퀴즈 점수</h3>
+            <h2>{}</h2>
+            <p>점이 최고 점수입니다</p>
+        </div>
+        """.format(st.session_state.user_stats['quiz_score']), unsafe_allow_html=True)
     
-    # 4. 동기부여 메시지/뱃지
-    streak = st.session_state.user_stats['streak_days']
-    if streak >= 3:
-        st.markdown(f'<div class="achievement-badge">🔥 {streak}일 연속 학습 중! 멋져요!</div>', unsafe_allow_html=True)
-    elif streak == 2:
-        st.markdown(f'<div class="achievement-badge">✨ 2일 연속! 내일도 도전!</div>', unsafe_allow_html=True)
-    elif streak == 1:
-        st.markdown(f'<div class="achievement-badge">🚀 첫 연속 학습! 시작이 반!</div>', unsafe_allow_html=True)
+    st.markdown("---")
     
-    # 5. 오늘의 AI 정보 미리보기 (카드)
-    st.markdown('<h3 class="section-title">📅 오늘의 AI 정보 미리보기</h3>', unsafe_allow_html=True)
+    # 오늘의 AI 정보 미리보기
+    st.markdown('<h2 class="section-title">📅 오늘의 AI 정보</h2>', unsafe_allow_html=True)
+    
     today_infos = get_today_ai_info()
     if today_infos:
-        for i, info in enumerate(today_infos[:2]):
+        for i, info in enumerate(today_infos[:2]):  # 처음 2개만 미리보기
             st.markdown(f"""
             <div class="info-card">
                 <h4>💡 정보 {i+1}</h4>
                 <p>{info}</p>
             </div>
             """, unsafe_allow_html=True)
+        
         if len(today_infos) > 2:
-            st.info("더 많은 정보를 보려면 '오늘의 학습' 탭을 이용하세요!")
+            st.info("더 많은 정보를 보려면 '📚 오늘의 학습' 메뉴를 방문해주세요!")
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
     
-    # 6. 오늘의 용어 학습 카드
-    st.markdown('<h3 class="section-title">🔤 오늘의 AI 용어</h3>', unsafe_allow_html=True)
+    # 오늘의 용어 학습 카드
+    st.markdown('<h2 class="section-title">📖 오늘의 AI 용어</h2>', unsafe_allow_html=True)
     today_glossary = get_today_glossary()
     learned = today_glossary['term'] in st.session_state.glossary_learned
     st.markdown(f'''
     <div class="info-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h4>오늘의 용어</h4>
+            <h4>🔤 오늘의 용어</h4>
             <div>{'✅ 학습완료' if learned else '📖 학습하기'}</div>
         </div>
         <p style="font-size: 1.1em; line-height: 1.6; margin: 15px 0;"><b>{today_glossary['term']}</b>: {today_glossary['desc']}</p>
     </div>
     ''', unsafe_allow_html=True)
     if not learned:
-        if st.button("✅ 오늘의 용어 학습 완료", key="learn_today_glossary_btn2"):
+        if st.button("✅ 오늘의 용어 학습 완료", key="learn_today_glossary_btn"):
             st.session_state.glossary_learned.append(today_glossary['term'])
-            st.success(f"'{today_glossary['term']}' 용어를 학습하셨습니다!")
+            st.success(f"�� '{today_glossary['term']}' 용어를 학습하셨습니다!")
             st.rerun()
+    # 최근 학습한 용어 리스트
     if st.session_state.glossary_learned:
         st.markdown("#### 최근 학습한 용어")
         for t in st.session_state.glossary_learned[-5:][::-1]:
             st.info(f"{t}")
     
+    # 학습 모드 선택
+    st.markdown('<h2 class="section-title">🎯 학습 모드</h2>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📚 오늘의 학습 시작"):
+            st.session_state.menu = "📚 오늘의 학습"
+            st.rerun()
+    
+    with col2:
+        if st.button("🎯 퀴즈 도전"):
+            st.session_state.menu = "🎯 퀴즈"
+            st.rerun()
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tabs[1]:
-    # 오늘의 학습 - Duolingo 스타일 UX/UI 개선
+    # 오늘의 학습
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.markdown('<h2 class="section-title">📚 오늘의 AI 정보 학습</h2>', unsafe_allow_html=True)
+    # 날짜 선택 기능 추가
     all_dates = get_all_ai_info_dates()
     if all_dates:
         today_str = date.today().isoformat()
@@ -614,11 +616,8 @@ with tabs[1]:
         selected_date_str = selected_date.isoformat()
         infos = get_ai_info_by_date_wrapper(selected_date_str)
         if infos:
-            learned_list = st.session_state.user_progress.get(selected_date_str, [])
-            st.markdown(f"<b>오늘의 목표:</b> {len(infos)}개 정보 모두 학습하기", unsafe_allow_html=True)
-            st.progress(len(learned_list) / len(infos) if infos else 0.0, text=f"{len(learned_list)}/{len(infos)} 완료")
             for i, info in enumerate(infos, 1):
-                learned = i-1 in learned_list
+                learned = i-1 in st.session_state.user_progress.get(selected_date_str, [])
                 st.markdown(f"""
                 <div class="info-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -629,7 +628,7 @@ with tabs[1]:
                 render_info(info, key=f"learn_{selected_date_str}_{i}")
                 st.markdown("</div>", unsafe_allow_html=True)
                 if not learned:
-                    if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}_new"):
+                    if st.button(f"✅ 정보 {i} 학습 완료", key=f"learn_info_{selected_date_str}_{i}"):
                         update_user_progress(selected_date_str, i-1)
                         new_achievements = check_achievements()
                         st.success(f"🎉 정보 {i}을(를) 학습하셨습니다!")
@@ -638,8 +637,22 @@ with tabs[1]:
                                 st.balloons()
                                 st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
                         st.rerun()
-            if len(learned_list) == len(infos):
-                st.success("🎉 오늘의 모든 정보를 학습하셨습니다! AI 마스터에 한 걸음 더 가까워졌어요!")
+            # 학습 진행률 표시
+            learned_count = len(st.session_state.user_progress.get(selected_date_str, []))
+            progress = (learned_count / len(infos)) * 100
+            st.markdown(f"""
+            <div style="margin-top: 30px;">
+                <h4>📊 학습 진행률</h4>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {progress}%"></div>
+                </div>
+                <p style="text-align: center; margin: 10px 0;">
+                    {learned_count}/{len(infos)} 완료 ({progress:.1f}%)
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            if learned_count == len(infos):
+                st.success("🎉 이 날짜의 모든 AI 정보를 학습하셨습니다! 훌륭해요!")
                 st.balloons()
         else:
             st.info("이 날짜의 AI 정보가 아직 등록되지 않았습니다.")
