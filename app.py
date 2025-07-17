@@ -1345,21 +1345,18 @@ st.markdown("""
 if 'data_saved' not in st.session_state:
     st.session_state.data_saved = True
 
-# 최종질문(요약/정리) 결과에서 중복 전문용어 정리 블록 제거
+# 프롬프트와 기반 내용 합치기 시 불필요한 안내 문구 제거 함수 추가
 import re
 
-def remove_duplicate_terms(text):
-    # 'ChatGPT의 말:' 또는 '전문용어 정리'로 시작하는 블록 제거
-    pattern = r'(ChatGPT의 말:.*?필요하면.*?드릴 수 있습니다!\n?)'
-    text = re.sub(pattern, '', text, flags=re.DOTALL)
-    # '전문용어 정리'로 시작하는 블록도 제거
-    pattern2 = r'(전문용어 정리.*?필요하면.*?드릴 수 있습니다!\n?)'
-    text = re.sub(pattern2, '', text, flags=re.DOTALL)
+def remove_prompt_base_labels(text):
+    # '선택된 프롬프트:'와 '선택된 기반 내용:' 문구와 그 뒤 한 줄 제거
+    text = re.sub(r'선택된 프롬프트:[^\n]*\n?', '', text)
+    text = re.sub(r'선택된 기반 내용:[^\n]*\n?', '', text)
     return text
 
 # ... 기존 코드 ...
-# 최종질문 결과를 표시할 때 아래처럼 적용
-# summary = ... (기존 요약 결과)
-# summary = remove_duplicate_terms(summary)
-# st.write(summary)
+# 합쳐진 프롬프트+기반내용을 표시/복사/링크 생성할 때 아래처럼 적용
+# merged = ... (합쳐진 텍스트)
+# merged = remove_prompt_base_labels(merged)
+# st.write(merged)
 # ... 기존 코드 ...
