@@ -1317,10 +1317,7 @@ with tabs[5]:
                 selected_base_idx = st.selectbox("기반 내용 선택", range(len(st.session_state.base_storage)), format_func=lambda x: base_options[x], key="combine_base_select")
                 selected_prompt = st.session_state.prompt_storage[selected_prompt_idx]
                 selected_base = st.session_state.base_storage[selected_base_idx]
-                st.markdown("**선택된 프롬프트:**")
-                st.info(selected_prompt['content'])
-                st.markdown("**선택된 기반 내용:**")
-                st.info(selected_base['content'])
+                # 안내문구/내용 미출력, 오직 합쳐진 질문만 미리보기로 표시
                 combined_question = selected_prompt['content'] + "\n\n" + selected_base['content']
                 st.markdown("**합쳐진 질문 미리보기:**")
                 st.text_area("최종 질문", value=combined_question, height=200, disabled=False, key="combined_final_text")
