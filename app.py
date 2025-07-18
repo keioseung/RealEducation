@@ -597,44 +597,7 @@ with st.sidebar:
 # 메인 컨텐츠
 # --- [탭 UI로 전환] ---
 
-# 선택된 정보 상세 보기
-if st.session_state.show_info_detail and st.session_state.selected_info_index is not None:
-    st.session_state.show_info_detail = False
-    info_index = st.session_state.selected_info_index
-    
-    # 오늘의 정보 가져오기
-    today_infos = get_today_ai_info()
-    if today_infos and info_index < len(today_infos):
-        selected_info = today_infos[info_index]
-        st.markdown('<h2 class="section-title">📖 선택한 정보 상세 보기</h2>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="info-card" style="border: 3px solid #43cea2; box-shadow: 0 0 20px rgba(67, 206, 162, 0.3);">
-            <h4>💡 정보 {info_index + 1}</h4>
-            <h3>{selected_info['title']}</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        render_info(selected_info['content'], key=f"detail_info_{info_index}")
-        
-        # 학습 완료 버튼
-        today_date = date.today().isoformat()
-        learned_list = st.session_state.user_progress.get(today_date, [])
-        if info_index not in learned_list:
-            if st.button(f"✅ 정보 {info_index + 1} 학습 완료", key=f"complete_info_{info_index}"):
-                update_user_progress(today_date, info_index)
-                new_achievements = check_achievements()
-                st.success(f"🎉 정보 {info_index + 1}을(를) 학습하셨습니다!")
-                if new_achievements:
-                    for achievement in new_achievements:
-                        st.balloons()
-                        st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
-                st.rerun()
-        else:
-            st.success("✅ 이미 학습 완료된 정보입니다!")
-        
-        # 뒤로 가기 버튼
-        if st.button("← 홈으로 돌아가기"):
-            st.session_state.selected_info_index = None
-            st.rerun()
+
 
 tabs = st.tabs(["🏠 홈", "📚 오늘의 학습", "📖 학습 기록", "🎯 퀴즈", "📊 통계", "⚙️ 관리자"])
 
@@ -684,6 +647,38 @@ with tabs[0]:
                 st.session_state.show_info_detail = True
                 st.session_state.selected_info_index = i
                 st.rerun()
+            
+            # 선택된 정보의 상세 내용을 바로 아래에 표시
+            if st.session_state.show_info_detail and st.session_state.selected_info_index == i:
+                st.markdown(f"""
+                <div class="info-card" style="border: 3px solid #43cea2; box-shadow: 0 0 20px rgba(67, 206, 162, 0.3); margin-top: 10px;">
+                    <h4>💡 정보 {i+1}</h4>
+                    <h3>{info['title']}</h3>
+                </div>
+                """, unsafe_allow_html=True)
+                render_info(info['content'], key=f"detail_info_{i}")
+                
+                # 학습 완료 버튼
+                today_date = date.today().isoformat()
+                learned_list = st.session_state.user_progress.get(today_date, [])
+                if i not in learned_list:
+                    if st.button(f"✅ 정보 {i+1} 학습 완료", key=f"complete_info_{i}"):
+                        update_user_progress(today_date, i)
+                        new_achievements = check_achievements()
+                        st.success(f"🎉 정보 {i+1}을(를) 학습하셨습니다!")
+                        if new_achievements:
+                            for achievement in new_achievements:
+                                st.balloons()
+                                st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
+                        st.rerun()
+                else:
+                    st.success("✅ 이미 학습 완료된 정보입니다!")
+                
+                # 접기 버튼
+                if st.button("📁 접기", key=f"close_info_{i}"):
+                    st.session_state.show_info_detail = False
+                    st.session_state.selected_info_index = None
+                    st.rerun()
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
     
