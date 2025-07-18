@@ -354,6 +354,8 @@ ai_glossary = [
 # --- [2] 오답노트 세션 상태 추가 ---
 if 'quiz_wrong_notes' not in st.session_state:
     st.session_state.quiz_wrong_notes = []
+if 'switch_to_learn_tab' not in st.session_state:
+    st.session_state.switch_to_learn_tab = False
 
 # --- [3] 오늘의 AI 트렌드(뉴스) 더미 데이터 ---
 # ai_trends = [
@@ -590,6 +592,13 @@ with st.sidebar:
 
 # 메인 컨텐츠
 # --- [탭 UI로 전환] ---
+
+# 탭 전환 안내
+if st.session_state.switch_to_learn_tab:
+    st.session_state.switch_to_learn_tab = False
+    st.success("📚 오늘의 학습 탭으로 이동합니다!")
+    st.info("위의 '📚 오늘의 학습' 탭을 클릭해주세요.")
+
 tabs = st.tabs(["🏠 홈", "📚 오늘의 학습", "📖 학습 기록", "🎯 퀴즈", "📊 통계", "⚙️ 관리자"])
 
 with tabs[0]:
@@ -643,7 +652,7 @@ with tabs[0]:
                 """, unsafe_allow_html=True)
             with col2:
                 if st.button(f"📖 학습하기", key=f"home_learn_info_{i}"):
-                    st.session_state.menu = "📚 오늘의 학습"
+                    st.session_state.switch_to_learn_tab = True
                     st.rerun()
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
