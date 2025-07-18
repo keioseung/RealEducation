@@ -636,7 +636,7 @@ with tabs[0]:
             st.markdown(f"""
             <div class="info-card">
                 <h4>💡 정보 {i+1}</h4>
-                <p>{info}</p>
+                <p>{info['title']}</p>
             </div>
             """, unsafe_allow_html=True)
         
