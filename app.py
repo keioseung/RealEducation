@@ -632,16 +632,13 @@ with tabs[0]:
     
     today_infos = get_today_ai_info()
     if today_infos:
-        for i, info in enumerate(today_infos[:2]):  # 처음 2개만 미리보기
+        for i, info in enumerate(today_infos):  # 모든 정보 표시
             st.markdown(f"""
             <div class="info-card">
                 <h4>💡 정보 {i+1}</h4>
                 <p>{info['title']}</p>
             </div>
             """, unsafe_allow_html=True)
-        
-        if len(today_infos) > 2:
-            st.info("더 많은 정보를 보려면 '📚 오늘의 학습' 메뉴를 방문해주세요!")
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
     
