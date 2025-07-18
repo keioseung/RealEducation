@@ -356,6 +356,8 @@ if 'quiz_wrong_notes' not in st.session_state:
     st.session_state.quiz_wrong_notes = []
 if 'switch_to_learn_tab' not in st.session_state:
     st.session_state.switch_to_learn_tab = False
+if 'selected_info_index' not in st.session_state:
+    st.session_state.selected_info_index = None
 
 # --- [3] 오늘의 AI 트렌드(뉴스) 더미 데이터 ---
 # ai_trends = [
@@ -596,8 +598,9 @@ with st.sidebar:
 # 탭 전환 안내
 if st.session_state.switch_to_learn_tab:
     st.session_state.switch_to_learn_tab = False
-    st.success("📚 오늘의 학습 탭으로 이동합니다!")
-    st.info("위의 '📚 오늘의 학습' 탭을 클릭해주세요.")
+    selected_info_num = st.session_state.selected_info_index + 1 if st.session_state.selected_info_index is not None else 1
+    st.success(f"📚 오늘의 학습 탭으로 이동합니다!")
+    st.info(f"위의 '📚 오늘의 학습' 탭을 클릭하면 정보 {selected_info_num}이(가) 강조 표시됩니다.")
 
 tabs = st.tabs(["🏠 홈", "📚 오늘의 학습", "📖 학습 기록", "🎯 퀴즈", "📊 통계", "⚙️ 관리자"])
 
@@ -653,6 +656,7 @@ with tabs[0]:
             with col2:
                 if st.button(f"📖 학습하기", key=f"home_learn_info_{i}"):
                     st.session_state.switch_to_learn_tab = True
+                    st.session_state.selected_info_index = i  # 선택된 정보 인덱스 저장
                     st.rerun()
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
@@ -734,12 +738,30 @@ with tabs[1]:
             learned_list = st.session_state.user_progress.get(selected_date_str, [])
             st.markdown(f"<b>오늘의 목표:</b> {len(infos)}개 정보 모두 학습하기", unsafe_allow_html=True)
             st.progress(len(learned_list) / len(infos) if infos else 0.0, text=f"{len(learned_list)}/{len(infos)} 완료")
+            
+            # 선택된 정보가 있으면 안내 메시지 표시
+            if st.session_state.selected_info_index is not None:
+                selected_info_num = st.session_state.selected_info_index + 1
+                st.success(f"🎯 홈에서 선택한 정보 {selected_info_num}을(를) 학습해보세요!")
+                st.session_state.selected_info_index = None  # 한 번만 표시
+            
             for i, info in enumerate(infos, 1):
                 learned = i-1 in learned_list
-                st.markdown(f"""
+                # 선택된 정보인지 확인
+                is_selected = (st.session_state.selected_info_index is not None and 
+                             st.session_state.selected_info_index == i-1)
+                
+                # 선택된 정보는 다른 스타일 적용
+                card_style = """
+                <div class="info-card" style="border: 3px solid #43cea2; box-shadow: 0 0 20px rgba(67, 206, 162, 0.3);">
+                """ if is_selected else """
                 <div class="info-card">
+                """
+                
+                st.markdown(f"""
+                {card_style}
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h4>{info['title'] or f'AI 정보 {i}'}</h4>
+                        <h4>{'🎯 ' if is_selected else ''}{info['title'] or f'AI 정보 {i}'}</h4>
                         <div>{'✅ 학습완료' if learned else '📖 학습하기'}</div>
                     </div>
                 """, unsafe_allow_html=True)
