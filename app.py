@@ -597,44 +597,22 @@ with st.sidebar:
 # 메인 컨텐츠
 # --- [탭 UI로 전환] ---
 
-# 선택된 정보 상세 보기
+# 탭 전환 안내
 if st.session_state.show_info_detail and st.session_state.selected_info_index is not None:
     st.session_state.show_info_detail = False
     info_index = st.session_state.selected_info_index
+    info_num = info_index + 1
     
-    # 오늘의 정보 가져오기
-    today_infos = get_today_ai_info()
-    if today_infos and info_index < len(today_infos):
-        selected_info = today_infos[info_index]
-        st.markdown('<h2 class="section-title">📖 선택한 정보 상세 보기</h2>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="info-card" style="border: 3px solid #43cea2; box-shadow: 0 0 20px rgba(67, 206, 162, 0.3);">
-            <h4>💡 정보 {info_index + 1}</h4>
-            <h3>{selected_info['title']}</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        render_info(selected_info['content'], key=f"detail_info_{info_index}")
-        
-        # 학습 완료 버튼
-        today_date = date.today().isoformat()
-        learned_list = st.session_state.user_progress.get(today_date, [])
-        if info_index not in learned_list:
-            if st.button(f"✅ 정보 {info_index + 1} 학습 완료", key=f"complete_info_{info_index}"):
-                update_user_progress(today_date, info_index)
-                new_achievements = check_achievements()
-                st.success(f"🎉 정보 {info_index + 1}을(를) 학습하셨습니다!")
-                if new_achievements:
-                    for achievement in new_achievements:
-                        st.balloons()
-                        st.success(f"🏆 새로운 성취를 달성했습니다: {achievement['name']}")
-                st.rerun()
-        else:
-            st.success("✅ 이미 학습 완료된 정보입니다!")
-        
-        # 뒤로 가기 버튼
-        if st.button("← 홈으로 돌아가기"):
-            st.session_state.selected_info_index = None
-            st.rerun()
+    st.success(f"📚 오늘의 학습 탭으로 이동합니다!")
+    st.info(f"위의 '📚 오늘의 학습' 탭을 클릭하면 정보 {info_num}이(가) 강조 표시됩니다.")
+    
+    # 탭 클릭을 위한 시각적 안내
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; padding: 15px; border-radius: 10px; margin: 10px 0; text-align: center;">
+        <strong>💡 팁:</strong> 위의 탭 메뉴에서 "📚 오늘의 학습"을 클릭하세요!
+    </div>
+    """, unsafe_allow_html=True)
 
 tabs = st.tabs(["🏠 홈", "📚 오늘의 학습", "📖 학습 기록", "🎯 퀴즈", "📊 통계", "⚙️ 관리자"])
 
@@ -772,6 +750,13 @@ with tabs[1]:
             learned_list = st.session_state.user_progress.get(selected_date_str, [])
             st.markdown(f"<b>오늘의 목표:</b> {len(infos)}개 정보 모두 학습하기", unsafe_allow_html=True)
             st.progress(len(learned_list) / len(infos) if infos else 0.0, text=f"{len(learned_list)}/{len(infos)} 완료")
+            
+            # 선택된 정보가 있으면 안내 메시지 표시
+            if st.session_state.selected_info_index is not None:
+                selected_info_num = st.session_state.selected_info_index + 1
+                st.success(f"🎯 홈에서 선택한 정보 {selected_info_num}을(를) 학습해보세요!")
+                # 한 번 표시 후 초기화
+                st.session_state.selected_info_index = None
             
             for i, info in enumerate(infos, 1):
                 learned = i-1 in learned_list
