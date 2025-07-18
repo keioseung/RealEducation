@@ -633,12 +633,18 @@ with tabs[0]:
     today_infos = get_today_ai_info()
     if today_infos:
         for i, info in enumerate(today_infos):  # 모든 정보 표시
-            st.markdown(f"""
-            <div class="info-card">
-                <h4>💡 정보 {i+1}</h4>
-                <p>{info['title']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"""
+                <div class="info-card">
+                    <h4>💡 정보 {i+1}</h4>
+                    <p>{info['title']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                if st.button(f"📖 학습하기", key=f"home_learn_info_{i}"):
+                    st.session_state.menu = "📚 오늘의 학습"
+                    st.rerun()
     else:
         st.info("오늘의 AI 정보가 아직 등록되지 않았습니다.")
     
